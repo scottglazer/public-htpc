@@ -1,0 +1,16 @@
+---
+# defaults file for debug-role
+  required_mounts:
+    - '/' #present
+    - '/fakemount' #missing
+    - '/mnt/wsl/docker-desktop-data/version-pack-data' #present
+
+  check:
+    - set_fact:
+      mount_names: "{{ ansible_mounts | map(attribute='mount') | list }}"
+    - debug:
+        var: mount_names
+      loop: "{{ required_mounts }}"
+      failed_when: item not in mount_names
+    - debug: 
+        msg: "{{ mount_names }}"

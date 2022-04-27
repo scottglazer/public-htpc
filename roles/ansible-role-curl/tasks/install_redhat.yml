@@ -1,0 +1,8 @@
+---
+
+- name: 'INSTALL | YUM | Install curl packages'
+  become: True
+  yum:
+    name: "{{ item.name }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ curl_packages }}"

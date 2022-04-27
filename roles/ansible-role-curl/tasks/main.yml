@@ -1,0 +1,17 @@
+---
+
+# Main tasks file for curl role
+
+- name: 'INIT | Manage variables to use for our target'
+  import_tasks: "{{ role_path }}/tasks/manage_variables.yml"
+  tags:
+    - 'role::curl'
+    - 'role::curl::init'
+    - 'role::curl::install'
+
+
+- name: 'INSTALL | Manage OS family installation tasks'
+  include_tasks: "{{ role_path }}/tasks/install_{{ ansible_os_family | lower }}.yml"
+  tags:
+    - 'role::curl'
+    - 'role::curl::install'

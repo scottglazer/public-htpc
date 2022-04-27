@@ -1,0 +1,224 @@
+#converting my docker-compose into a playbook
+
+---
+tasks:
+  
+  - name: docker | plex
+    docker_container:
+      image: linuxserver/plex
+      container_name: plex
+      volumes:
+        - /opt/appdata/plex:/config
+        - /mnt/storage:/data
+      network_mode: host
+      restart: always
+      environment:
+        - PLEX_CLAIM="nope"
+        - PUID=$${PUID}
+        - PGID=$${PGID}
+
+  - name: docker | tautulli
+    docker_container:
+      image: tautulli/tautulli
+      container_name: tautulli
+      depends_on:
+        - plex
+      volumes:
+        - /opt/appdata/tautulli:/config
+        - /opt/appdata/plex/Library/Application\ Support/Plex\ Media\ Server/Logs:/logs:ro
+      ports:
+        - 27029:8181
+      links:
+        - plex
+      restart: always
+      environment:
+        - PUID=$${PUID}
+        - PGID=$${PGID}
+
+  nzbget:
+    image: linuxserver/nzbget
+    container_name: nzbget
+    volumes:
+      - /opt/appdata/nzbget/config:/config
+      - /mnt/storage/downloads:/downloads
+      - /mnt/storage/downloads/complete:/downloads/complete
+    ports:
+      - 27020:6789
+    restart: always
+    environment:
+      - PUID=$${PUID}
+      - PGID=$${PGID}
+
+  sonarr:
+    image: linuxserver/sonarr
+    container_name: sonarr
+    depends_on:
+      - nzbget
+    volumes:
+      - /opt/appdata/sonarr:/config
+      - /mnt/storage/tv:/tv
+      - /mnt/storage/downloads/complete/tv:/downloads
+      - /mnt/storage/downloads/complete/tv_import:/tv_import
+    ports:
+      - 27021:8989
+    links:
+      - nzbget
+    restart: always
+    environment:
+      - PUID=$${PUID}
+      - PGID=$${PGID}
+
+  unifi:
+    image: linuxserver/unifi
+    container_name: unifi
+    network_mode: host
+    volumes:
+      - /opt/appdata/unifi:/config
+    environment:
+      - PUID=$${PUID}
+      - PGID=$${PGID}
+
+  deluge:
+    image: linuxserver/deluge
+    container_name: deluge
+    network_mode: host
+    volumes:
+      - /opt/appdata/deluge:/config
+      - /mnt/storage/downloads:/downloads
+      - /mnt/storage:/mnt/storage
+    restart: always
+    environment:
+      - PUID=$${PUID}
+      - PGID=$${PGID}
+
+  sync:
+    image: linuxserver/resilio-sync
+    container_name: sync
+    volumes:
+      - /opt/appdata/sync:/config
+      - /mnt/storage:/sync
+    ports:
+      - 27028:8888
+      - 55555:55555
+    environment:
+      - PUID=$${PUID}
+      - PGID=$${PGID}
+    restart: always
+
+  smokeping:
+    image: linuxserver/smokeping
+    container_name: smokeping
+    volumes:
+      - /opt/appdata/smokeping/config:/config
+      - /opt/appdata/smokeping/data:/data
+    ports:
+      - 27025:80
+    environment:
+      - PUID=$${PUID}
+      - PGID=$${PGID}
+    restart: always
+
+  quassel:
+    image: linuxserver/quassel-core
+    container_name: quassel
+    volumes:
+      - /opt/appdata/quassel:/config
+    ports:
+      - 27023:4242
+    environment:
+      - PUID=$${PUID}
+      - PGID=$${PGID}
+    restart: always
+
+  radarr:
+    image: linuxserver/radarr
+    container_name: radarr
+    volumes:
+      - /opt/appdata/radarr:/config
+      - /mnt/storage/movies:/movies
+      - /mnt/storage/downloads/complete/movies:/downloads
+    ports:
+      - 7878:7878
+    environment:
+      - PUID=$${PUID}
+      - PGID=$${PGID}
+    restart:
+      always
+
+  letsencrypt:
+    image: linuxserver/letsencrypt
+    container_name: letsencrypt
+    ports:
+      - 443:443
+    volumes:
+      - /opt/appdata/letsencrypt:/config
+    restart:
+      always
+    environment:
+      - PUID=$${PUID}
+      - PGID=$${PGID}
+      - EMAIL=some@email.com
+      - URL=domain.tld
+      - SUBDOMAINS=one,sub,domain,comma,separated
+      - ONLY_SUBDOMAINS=true
+      - DHLEVEL=4096
+      - TZ=Europe/London
+
+  ghost:
+    image: ghost
+    container_name: ghost
+    ports:
+      - "127.0.0.1:2368:2368"
+    environment:
+      - NODE_ENV=production
+      - url=https://blog.ktz.me
+    volumes:
+      - /opt/appdata/blog-ktz:/var/lib/ghost/content
+    restart:
+      always
+
+  influxdb:
+    image: influxdb:latest
+    container_name: influxdb
+    restart: always
+    ports:
+      - 8086:8086
+    volumes:
+      - /opt/appdata/influxdb:/var/lib/influxdb
+    restart:
+      always
+
+  portainer:
+    image: portainer/portainer
+    container_name: portainer
+    ports:
+      - 9000:9000
+    volumes:
+      - /opt/appdata/portainer:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart:
+      always
+#
+#
+#
+#
+#
+#
+#  MAYBE LATER, WHO KNOWS
+#
+#
+#
+#  grafana:
+#this was very picky about ownership, so if you see it restarting a bunch in
+#cockpit, it's likely you'll need to chown -R the whole /var directory as
+#your login user so it can create the stuff it needs 
+#    image: grafana/grafana
+#    container_name: grafana
+#    restart: always
+#    user: '1000'
+#    ports:
+#      - 3000:3000
+#    volumes:
+#      - /opt/appdata/grafana:/var/lib/grafana
+#    restart:
+#      always

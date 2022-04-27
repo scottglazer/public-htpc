@@ -1,0 +1,6 @@
+---
+
+# Redhat OS family specific vars
+
+_curl_packages:
+  - name: 'curl'

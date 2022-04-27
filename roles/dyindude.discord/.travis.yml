@@ -1,0 +1,37 @@
+---
+sudo: required
+language: python
+python: "2.7"
+
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+    - os: linux
+      dist: xenial
+
+env:
+  - SITE=test.yml
+
+before_install:
+  - sudo apt-get update -qq
+
+before_script:
+  - cd ../
+  - mv ansible-role-discord dyindude.discord
+  - cd dyindude.discord
+
+install:
+  # Install Ansible.
+  - pip install 'ansible==2.1.1.0'
+
+  # Add ansible.cfg to pick up roles path.
+  - "{ echo '[defaults]'; echo 'roles_path = ../'; echo 'host_key_checking = False'; } >> ansible.cfg"
+
+script:
+  # Run twice to check idempotency
+  - "ansible-playbook -i tests/inventory tests/$SITE"
+  - "ansible-playbook -i tests/inventory tests/$SITE"
+
+notifications:
+  webhooks: https://galaxy.ansible.com/api/v1/notifications/

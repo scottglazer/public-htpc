@@ -1,0 +1,251 @@
+---
+version: '3'
+
+services:
+
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    network_mode: bridge
+    ports:
+      #
+      #Deluge: Change the inbound port to 6881 (or whichever port you've mapped for the container) 
+      #under Preferences->Network, otherwise random ports will be used.  Same with outbound.
+      #
+      - 6881:6881 # deluge inbound traffic
+      - 6881:6881/udp # deluge inbound traffic
+      - 6882:6882 # deluge outbound traffic
+      - 6882:6882/udp # deluge outbound traffic
+      - 8888:8888/tcp # HTTP proxy
+      - 8388:8388/tcp # Shadowsocks
+      - 8388:8388/udp # Shadowsocks
+      - 8000:8000/tcp # Built-in HTTP control server
+      - 27020:6789/tcp # nzbget
+      - 27021:8989/tcp # sonarr
+      - 27022:7878/tcp # radarr
+      - 27023:9696/tcp # prowlarr
+      - 27025:8112 # deluge admin panel
+      - 27026:5055 #overseerr
+      - 27028:4545 #requestrr
+    volumes:
+      - /opt/appdata/gluetun:/gluetun
+    environment:
+      - VPNSP=mullvad
+      - OPENVPN_USER=${MULLVAD_ID}
+      - OWNED=yes
+      - HTTPPROXY=on
+      - PUID=${PUID}
+      - PGID=${PGID}
+    restart: always
+
+  portainer:
+    image: portainer/portainer-ce:2.11.1
+    container_name: portainer
+    ports:
+      - 27024:9000
+    volumes:
+      - /opt/appdata/portainer:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart:
+      always
+
+  nzbget:
+    image: linuxserver/nzbget
+    container_name: nzbget
+    network_mode: "service:gluetun"
+    volumes:
+      - /opt/appdata/nzbget/config:/config
+      - /mnt/storage/downloads:/downloads
+      - /mnt/storage/downloads/complete:/downloads/complete
+#    ports:
+#      - 27020:6789
+    restart: always
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+
+  sonarr:
+    image: linuxserver/sonarr:latest
+    container_name: sonarr
+    depends_on:
+      - nzbget
+    network_mode: "service:gluetun"
+    volumes:
+      - /opt/appdata/sonarr:/config
+      - /mnt/storage/tv:/tv
+      - /mnt/storage/downloads/complete/tv:/downloads/complete/tv
+      - /mnt/storage/downloads/complete/tv_import:/tv_import
+#    ports:
+#      - 27021:8989
+    restart: always
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+
+  radarr:
+    image: linuxserver/radarr
+    container_name: radarr
+    network_mode: "service:gluetun"
+    volumes:
+      - /opt/appdata/radarr:/config
+      - /mnt/storage/movies:/movies
+      - /mnt/storage/downloads/complete/:/downloads/complete
+#    ports:
+#      - 27022:7878
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+    restart:
+      always
+
+  prowlarr:
+    image: ghcr.io/linuxserver/prowlarr:develop
+    container_name: prowlarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    network_mode: "service:gluetun"
+    volumes:
+      - /opt/appdata/prowlarr:/config
+      - /mnt/storage/downloads:/downloads
+#    ports:
+#      - 27023:9696
+    restart: always
+
+  deluge:
+#    image: linuxserver/deluge
+#    Deluge 2.0 doesn't support add-ons, so we're using the latest 1.0.  Feel free to switch around;
+#    just make sure to pay attention to how the preferences panel changes.
+    image: linuxserver/deluge:amd64-5b398f77-ls22
+    container_name: deluge
+    network_mode: "service:gluetun"
+    volumes:
+      - /opt/appdata/deluge:/config
+      - /mnt/storage/downloads/torrented:/downloads
+      - /mnt/storage:/mnt/storage
+    restart: always
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+
+  plex:
+    image: lscr.io/linuxserver/plex
+    container_name: plex
+    volumes:
+      - /opt/appdata/plex:/config
+      - /mnt/storage:/data
+      - /mnt/storage/movies:/movies
+      - /mnt/storage/tv:/tv
+    network_mode: bridge
+    restart: always
+    ports:
+      - 32400:32400
+    environment:
+      - PLEX_CLAIM="nope"
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - VERSION=docker
+
+  tautulli:
+    image: tautulli/tautulli
+    container_name: tautulli
+    depends_on:
+      - plex
+    volumes:
+      - /opt/appdata/tautulli:/config:rw
+      - /opt/appdata/plex/Library/Application\ Support/Plex\ Media\ Server/Logs:/logs:ro
+    ports:
+      - 27029:8181
+    restart: always
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+
+  doplarr:
+    image: lscr.io/linuxserver/doplarr
+    container_name: doplarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - DISCORD__TOKEN=${DISCORD_TOKEN}
+      - OVERSEERR__API=${OVERSEERR_API}
+      - OVERSEERR__URL=http://localhost:5055
+#   The following are only necessary if Overseerr is not being used
+#      - RADARR__API=<radarr__api>
+#      - RADARR__URL=http://localhost:7878
+#      - SONARR__API=<sonarr__api>
+#      - SONARR__URL=http://localhost:8989
+      - DISCORD__MAX_RESULTS=25 
+      - DISCORD__ROLE_ID=${ROLE_ID}
+      - DISCORD__REQUESTED_MSG_STYLE=:plain #optional
+#   ...again, only if you're not using Overseerr
+#      - SONARR__QUALITY_PROFILE=<not_set_by_default> #optional
+#      - RADARR__QUALITY_PROFILE=<not_set_by_default> #optional
+#      - SONARR__LANGUAGE_PROFILE=<not_set_by_default> #optional
+      - OVERSEERR__DEFAULT_ID=${OVERSEERR_ID}
+      - PARTIAL_SEASONS=true #optional
+      - LOG_LEVEL=:info #optional
+    network_mode: "service:gluetun"
+    depends_on:
+      - sonarr
+      - radarr
+      - overseerr
+      - gluetun
+    volumes:
+      - /opt/appdata/doplarr:/config
+    restart: unless-stopped
+
+  overseerr:
+    image: lscr.io/linuxserver/overseerr
+    container_name: overseerr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    network_mode: "service:gluetun"
+    volumes:
+      - /opt/appdata/overseerr/config:/config
+#    ports:
+#      - 27026:5055
+    labels:
+      - "traefik.enable=true"
+  ## HTTP Routers
+      - "traefik.http.routers.overseerr-rtr.entrypoints=https"
+      - "traefik.http.routers.overseerr-rtr.rule=Host(`overseerr.domain.com`)"
+      - "traefik.http.routers.overseerr-rtr.tls=true"
+  ## HTTP Services
+      - "traefik.http.routers.overseerr-rtr.service=overseerr-svc"
+      - "traefik.http.services.overseerr-svc.loadbalancer.server.port=5055"
+    restart: unless-stopped
+
+  unmanic:
+    container_name: unmanic
+    image: josh5/unmanic:latest
+    ports:
+      - 27050:8888
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+    volumes:
+      - /opt/appdata/unmanic/config:/config
+      - /opt/appdata/unmanic/library:/library
+      - /opt/appdata/unmanic/tmp/unmanic:/tmp/unmanic
+
+  heimdall:
+    container_name: heimdall
+    restart: always
+    image: linuxserver/heimdall:latest
+    volumes:
+      - /opt/appdata/heimdall/config:/config
+      - /opt/appdata/heimdall/shared:/shared
+    ports:
+      - 27030:80
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}

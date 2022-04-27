@@ -1,0 +1,119 @@
+---
+ansible_python_interpreter: /usr/bin/python3
+
+# general variables
+#
+email_address: email_address
+email_password: whatever_the_password_is
+
+# nikiforov docker vars
+#
+docker_sdk_for_python_install: true
+
+# MERGERFS
+#
+#Edit these to match your mounts
+#you will want to edit /etc/fstab to add the drives.
+#sudo blkid to list all drive UUID's.
+#Add these to fstab using format:
+#
+# <file system>                                            <mount point>         <type>      <options>         <dump>  <pass>
+#UUID=aad41a23-be97-4cc8-a54c-51238af932b1                  /mnt/disk1            ext4        defaults          0       0
+#
+#...for each drive (iterating the mount point: disk2, disk3, etc), with the pooled drive defined as:
+#
+#     mergerfs pool 
+# <file system>  <mount point >  <type>         <options>                                                        <dump>  <pass> 
+# /mnt/disk*     /mnt/storage    fuse.mergerfs  direct_io,defaults,allow_other,minfreespace=50G,fsname=mergerfs  0       0
+#
+# Make sure to assign one drive as the parity drive. I like just using /mnt/parity1 (to leave room for additional disks later if you wish).
+# This drive must be equal to or greater in size to the biggest data drive in the pool.
+
+mergerfs_mounts:
+  - path: /mnt/storage
+    branches:
+       - /mnt/disk1
+       - /mnt/disk2
+       - /mnt/disk3
+    options: allow_other,use_ino
+
+# SNAPRAID
+#
+# Indicate which of your disks you assigned as data disks in fstab.
+snapraid_data_disks:
+  - path: /mnt/disk1
+    content: true
+  - path: /mnt/disk2
+    content: true
+  - path: /mnt/disk3
+    content: true
+
+# Indicate your parity disk (also in fstab).
+snapraid_parity_disks:
+  - path: /mnt/parity1
+    content: true
+
+snapraid_content_files:
+  - /mnt/other-drive/snapraid.content
+  - /var/snapraid.content
+
+snapraid_config_excludes:
+  - "*.unrecoverable"
+  - /lost+found/
+  - "*.!sync"
+  - /tmp/
+
+
+# Set when you wish snapraid to check.
+snapraid_scrub_schedule:
+  hour: 5
+  weekday: 4
+
+snapraid_install: true
+snapraid_runner: true
+
+snapraid_apt_package_name: snapraid
+snapraid_bin_path: /usr/local/bin/snapraid
+snapraid_force_install: false
+
+snapraid_runner_healthcheck_io_uuid: ""
+snapraid_healthcheck_io_host: https://hc-ping.com
+
+snapraid_runner_email_address: "{{ email_address }}"
+snapraid_runner_gmail_pass: "{{ email_password }}"
+snapraid_runner_email_address_from: "{{ snapraid_runner_email_address }}"
+snapraid_runner_email_address_to: "{{ snapraid_runner_email_address }}"
+snapraid_runner_email_sendon: "error"
+
+snapraid_runner_smtp_host: smtp.gmail.com
+snapraid_runner_smtp_port: 465
+snapraid_runner_use_ssl: true
+
+snapraid_config_hidden_files_enabled: false
+snapraid_config_hidden_files: nohidden
+snapraid_config_path: /etc/snapraid.conf
+
+snapraid_runner_path: /opt/snapraid-runner/snapraid-runner
+snapraid_runner_conf: "{{ snapraid_runner_path }}.conf"
+snapraid_runner_bin: "{{ snapraid_runner_path }}.py"
+snapraid_runner_command: "python3 {{ snapraid_runner_bin }} -c {{ snapraid_runner_conf }} {% if snapraid_runner_healthcheck_io_uuid %}| curl -fsS -m 10 --retry 5 -o /dev/null --data-binary '@-' {{ snapraid_healthcheck_io_host }}/{{ snapraid_runner_healthcheck_io_uuid }} > /dev/null{% endif %}"
+snapraid_runner_scrub: true
+snapraid_scrub_percent: 22
+snapraid_scrub_age: 8
+snapraid_runner_touch: true
+snapraid_runner_delete_threshold: 250
+
+snapraid_runner_cron_jobs:
+  - { job: '{{ snapraid_runner_command }}', name: 'snapraid_runner', weekday: '*', hour: '01' }
+
+snapraid_sync_schedule:
+  minute: 0
+  hour: 0
+snapraid_sync_healthcheck_io_uuid: ""
+
+snapraid_scrub_schedule:
+  minute: 0
+  hour: 0
+  weekday: 0
+snapraid_scrub_healthcheck_io_uuid: ""
+...

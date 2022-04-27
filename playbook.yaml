@@ -1,0 +1,62 @@
+# Primarily based on https://www.linuxserver.io/blog/2017-06-24-the-perfect-media-server-2017
+# hostsfile standardly placed in etc/ansible/hosts, 
+# overwritten by ansible.cfg in same directory
+# install curl +
+# install lshw -
+# install dkms -
+# install linux headers -
+# install ssh -
+# install rdp -
+# edit the two greeter.dconf files -
+# install docker
+# install mergerfs
+# install snapRAID
+# edit fstab -> copy, paste and edit so this can be moved manually
+# install docker-compose
+# setup and automate snapRAID
+# configure samba
+# configure NFS
+# run docker-compose file
+# using ansible-role-curl from https://github.com/infOpen/ansible-role-curl/tree/master or https://galaxy.ansible.com/infopen/curl
+# docker role using https://galaxy.ansible.com/igor_nikiforov/docker
+# linux-system-role for cockpit from https://galaxy.ansible.com/linux-system-roles/cockpit
+# snapraid using https://galaxy.ansible.com/ironicbadger/ansible_role_snapraid
+# using mergerfs module: https://github.com/francescospilla/ansible-role-mergerfs
+---
+
+- hosts: all
+  become: yes
+
+  pre_tasks:
+    - name: install dependencies
+      apt:
+        name:
+          - python-pip
+          - python3-pip
+          - docker-compose
+
+  vars_files:
+    vars.yaml
+
+  roles:
+    - role: ansible-role-curl
+    - role: igor_nikiforov.docker
+    - role: sprat.mergerfs
+    - role: ansible-role-snapraid
+    - role: linux-system-roles.cockpit
+    - role: dyindude.discord
+
+  tasks:
+    - name: make a directory for the copied docker compose file
+      file:
+        path: /compose/
+        state: directory
+    - name: copy docker compose file
+      copy:
+        src: docker-compose.yml
+        dest: /compose/docker-compose.yml
+    - name: deploy docker compose stack
+      docker_compose:
+        project_src: /compose
+        files: docker-compose.yml
+...
