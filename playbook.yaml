@@ -1,27 +1,12 @@
 # Primarily based on https://www.linuxserver.io/blog/2017-06-24-the-perfect-media-server-2017
 # hostsfile standardly placed in etc/ansible/hosts, 
 # overwritten by ansible.cfg in same directory
-# install curl +
-# install lshw -
-# install dkms -
-# install linux headers -
-# install ssh -
-# install rdp -
-# edit the two greeter.dconf files -
-# install docker
-# install mergerfs
-# install snapRAID
-# edit fstab -> copy, paste and edit so this can be moved manually
-# install docker-compose
-# setup and automate snapRAID
-# configure samba
-# configure NFS
-# run docker-compose file
 # using ansible-role-curl from https://github.com/infOpen/ansible-role-curl/tree/master or https://galaxy.ansible.com/infopen/curl
 # docker role using https://galaxy.ansible.com/igor_nikiforov/docker
 # linux-system-role for cockpit from https://galaxy.ansible.com/linux-system-roles/cockpit
 # snapraid using https://galaxy.ansible.com/ironicbadger/ansible_role_snapraid
 # using mergerfs module: https://github.com/francescospilla/ansible-role-mergerfs
+# using dyindude.discord role from https://github.com/dyindude/ansible-role-discord
 ---
 
 - hosts: all
