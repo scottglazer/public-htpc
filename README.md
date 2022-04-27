@@ -17,6 +17,7 @@ localhost:port
 Application     Container Port      Default Port     What do I do?
 --------------------------------------------------------------------
 
+Cockpit           9090               9090            Monitoring application for system
 NZBGet            27020              6789            Usenet downloader
 Sonarr            27021              8989            Television
 Radarr            27022              7878            Movies
@@ -29,7 +30,7 @@ Heimdall          27030              80              Allows management of all we
 Unmanic           27050              8888            Converts media to set standard
 Plex              32400              32400           Media server
   
-Only Plex remains unchanged (32400).  </pre>
+ </pre>
 
 ## Initial preparation and setup
 
