@@ -17,7 +17,7 @@ localhost:port
 Application     Container Port      Default Port     What do I do?
 --------------------------------------------------------------------
 
-Cockpit           9090               9090            Monitoring application for system
+Cockpit           9090               9090            Monitoring application for system*
 NZBGet            27020              6789            Usenet downloader
 Sonarr            27021              8989            Television
 Radarr            27022              7878            Movies
@@ -29,8 +29,10 @@ Tautulli          27029              8181            Statistics for Plex
 Heimdall          27030              80              Allows management of all webapps 
 Unmanic           27050              8888            Converts media to set standard
 Plex              32400              32400           Media server
+
+*Not a container, running on actual hardware.
   
- </pre>
+</pre>
 
 ## Initial preparation and setup
 
@@ -42,7 +44,7 @@ Edit the vars.yaml file to add an email address and password.  You'll be editing
 
 *NOTE: Any file beginning with a period is invisible by default in Linux.  To view the files in Debian, access the folder via the file manager and hit CTRL + H to toggle hidden files.  Other Linux distros may differ, but should have similar options.*
 
-Update the .env file with your personal information to be pulled into the docker-compose when it runs. At this point, you may only have enough to fill out the PUID, PGID, EMAIL and (if you're using it) MULLVAD_ID.  Save the file now. You'll return to it for step 11 if you intend to set up Doplarr.
+Update the .env file with your personal information to be pulled into the docker-compose when it runs. At this point, you may only have enough to fill out the PUID, PGID, EMAIL and (if you're using it) MULLVAD_ID.  Save the file now. You'll return to it later on during app setup if you intend to set up Doplarr.
 
 2.  You will need to configure MergerFS.  The vars file gives brief instructions in the comments, which I'll repeat here:
 
@@ -108,7 +110,8 @@ Upon first run, you will need to configure NZBGet and the -arrs.  I would recomm
 
 
 
-  1.  Set up NZBGet.  Connect to http://localhost:27020/  Under the settings tab, define:
+### Set up NZBGet.  
+Connect to http://localhost:27020/  Under the settings tab, define:
 
   ```
        A: Paths.  Bear in mind the warning in step 4.  If you wish to use
@@ -125,7 +128,8 @@ Upon first run, you will need to configure NZBGet and the -arrs.  I would recomm
         unauthorized access.
   ```
 
-  2.  Set up Sonarr and Radarr.  Connect to http://localhost:27021/ (Sonarr) followed by http://localhost:27022/ (Radarr).  Under the settings tab:
+### Set up Sonarr and Radarr.  
+Connect to http://localhost:27021/ (Sonarr) followed by http://localhost:27022/ (Radarr).  Under the settings tab:
        
   ```
 	   A:  Choose the General category and take note of your API key for
@@ -140,7 +144,8 @@ Upon first run, you will need to configure NZBGet and the -arrs.  I would recomm
 
   ```
 
-  3. Set up Prowlarr. Connect to http://localhost:27023/  Define:
+### Set up Prowlarr. 
+Connect to http://localhost:27023/  Define:
        
   ```
                 ** A Note **
@@ -173,7 +178,8 @@ Upon first run, you will need to configure NZBGet and the -arrs.  I would recomm
 
    ```
   
-  4.  Verify VPN is working from Portainer.  Connect to http://localhost:27024.  
+### Verify VPN is working from Portainer.  
+Connect to http://localhost:27024.  
 
   If this is the first time you've used Portainer, it will ask you to define a password.  Don't lose this password - resetting it requires you search out the Portainer database and delete it (with the containers halted).  Once you're signed in:
 ```
@@ -187,26 +193,26 @@ Upon first run, you will need to configure NZBGet and the -arrs.  I would recomm
     Assuming all's well, you can type "exit" to get out of the session.
 ```
 
-  5.  Configure Deluge.  Connect to http://localhost:27025.  The default password is simply "deluge".  You should change it (there's a popup asking to do this when it's first started as well).  
+### Configure Deluge.  
+Connect to http://localhost:27025.  The default password is simply "deluge".  You should change it (there's a popup asking to do this when it's first started as well).  
+
+  In the Preferences, click the Network tab and enter port 6881 under "Incoming Port", ensuring "Use Random Port" is left unchecked.  Ensure "Outgoing Port is set to 6882 in a similar manner.  Under the   
+Downloads tab, configure "Download to:" to /downloads.  Feel free to change other settings as necessary.
+  
+
+  ***Configuring Overseerr and Doplarr is only necessary if you wish to have users request media via Discord. Overseerr can be used standalone as well, if you just like a nice interface to request things from***
 
 
-```
-  In the Preferences, click the Network tab and enter port 6881 under "Incoming Port", ensuring "Use Random Port" is left unchecked.  Ensure "Outgoing Port is set to 6882 in a similar manner.  Under the Downloads tab, configure "Download to:" to /downloads.  Feel free to change other settings as necessary.
-```  
+### Configure Overseerr.  
+Connect to http://localhost:27026.  Log into your plex account, select the server (if you have more than one you may want to manually do this), click "save changes", "then continue".
 
-  *Configuring Overseerr and Doplarr is only necessary if you wish to have users request media via Discord. Overseerr can be used standalone as well, if you just like a nice interface to request things from*
-
-
-  6. Configure Overseerr.  Connect to http://localhost:27026.  Log into your plex account, select the server (if you have more than one you may want to manually do this), click "save changes", "then continue".
-
-
-```
   Configure the Radarr and Sonarr servers. Copy your API key from Radarr (under Settings -> General), enter localhost as your  address and leave the default ports alone (this is communicating within the container).  Give the server a name, test it, then fill out the quality dropdowns (make sure "Enable Scan" and "Enable Automatic Search" are both checked)and save. These settings can be edited later under Settings -> Services.
 
   Under "Settings," click the Plex tab and click to refresh the list of servers if the list isn't already available.  Once that's been done, sync the libraries and (if you have existing media) do a manual library scan.
-```
 
-  7. Configure Doplarr. Modified instructions from [here](https://kiranshila.github.io/Doplarr/#/configuration):
+
+### Configure Doplarr. 
+Modified instructions from [here](https://kiranshila.github.io/Doplarr/#/configuration):
 
 
 ```
@@ -236,11 +242,15 @@ Run the docker-compose (if it's not already running, in which case stop and rest
 While still in Overseerr, create a new user (click "Users", then "Create Local User").  Copy the Discord User ID into the field of the same name (it's found in Discord by right clicking the Doplarr bot and then "Copy User ID", which is the last option in the list).  Save, then edit the user again and make note of the User ID (which is right under the name and icon for the user group).  Paste this into the .env file under *OVERSEER_ID*.
 
 ```
-  8.  Configure Tautulli.  Connect to http://localhost:27029.  Follow the Setup Wizard.
 
-  9.  Configure Heimdall.  Connect to http://localhost:27030.  Add and pin applications as desired, so you don't have a dozen bookmarks to everything.
+### Configure Tautulli.  
+Connect to http://localhost:27029.  Follow the Setup Wizard.
 
-  10.  (Optional, use occasionally) - Use Unmanic to modify your media to match one unified format (and to monitor anything coming in, if you wish).
+### Configure Heimdall.  
+Connect to http://localhost:27030.  Add and pin applications as desired, so you don't have a dozen bookmarks to everything.
+
+### Use Unmanic (Optional)
+You can use Unmanic to modify your media to match one unified format (and to monitor anything coming in, if you wish).  Connect to it by going to http://localhost:27050
 
 
 
