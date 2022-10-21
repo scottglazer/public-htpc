@@ -68,11 +68,37 @@ UUID=aad41a23-be97-4cc8-a54c-51238af932b1                  /mnt/disk1           
 
 </pre>
 
-3.  Docker containers should be run with a user that can sudo.  Assuming that's your current user, run a whoami command (to show the username), 
+3.  Set up SnapRAID so it knows what to look for.  SnapRAID uses /etc/snapraid.conf to determine what to do.  Your parity and content drives need to be assigned here.  The format will be looking to the mount point, with the role assignment preceding it.  So:
+
+parity /mnt/parity/snapraid.parity
+content /var/snapraid/snapraid.content
+content /mnt/disk1/.snapraid.content
+content /mnt/disk2/.snapraid.content
+data d1 /mnt/disk1/
+data d2 /mnt/disk2/
+
+...etc.
+
+The parity entry indicates the drive you wish to use for parity. More than one can be used in case of multiple drive failure, but they must be the largest drives in the array.
+The snapraid.content files are listings and details of the content of the disks. 
+The data entries specify the disks to check for data.
+
+Once this is done, initialize everything by running a "snapraid sync" command (may require sudo permissions).
+
+Other manual snapraid commands:
+
+snapraid scrub - verifies data in array.
+snapraid status - gives details on any I/O errors found.
+snapraid -e fix - will attempt to fix any errors.
+snapraid -p bad scrub - will remove errors from status report, assuming they are fixed.
+
+More details and explanation of recovery options can be found at https://www.snapraid.it/manual
+
+4.  Docker containers should be run with a user that can sudo.  Assuming that's your current user, run a whoami command (to show the username), 
 then id [username], where [username] is what you found from the whoami.  Edit the .env file so PUID and PGID are equal to what you saw under uid
 and gid respectively.
 
-4.  Double check the docker-compose file to edit anything that might differ on your system or that you might wish to otherwise change.  Pay particular attention to the volumes.  For any given volume, the format
+5.  Double check the docker-compose file to edit anything that might differ on your system or that you might wish to otherwise change.  Pay particular attention to the volumes.  For any given volume, the format
 is:
 
 actual/volume/location/on/pc:volume/seen/in/docker
@@ -91,7 +117,7 @@ VPN setup is handled via Mullvad. If you're not using Mullvad, I suggest you det
 
 If you do not wish to use a VPN, comment out the entire Gluetun entry and paste the port mapping (other than the first four, so starting at portainer) into each individual service so it knows what ports to use.
 
-5.  The Docker-Compose will run as soon as the playbook is done running, and any required directories will be created.  Briefly, to control the docker-compose stack from the directory where docker-compose.yaml is located:
+6.  The Docker-Compose will run as soon as the playbook is done running, and any required directories will be created.  Briefly, to control the docker-compose stack from the directory where docker-compose.yaml is located:
 
   docker-compose pull:  updates all docker files
   docker-compose up -d: starts the stack in the background
@@ -251,6 +277,14 @@ Connect to http://localhost:27030.  Add and pin applications as desired, so you 
 
 ### Use Unmanic (Optional)
 You can use Unmanic to modify your media to match one unified format (and to monitor anything coming in, if you wish).  Connect to it by going to http://localhost:27050
+
+```
+From the Home screen, click the three lines in the upper left-hand corner.  
+Select Settings.
+In the Library tab, the library itself will be pointing to /library.  You can add two more libraries for TV and Movies (using /tv and /movies respectively - the true paths are in the docker-compose).
+Click on the Plugins tab, choose plugins that suit your purpose.
+
+```
 
 
 
