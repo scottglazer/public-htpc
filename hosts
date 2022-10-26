@@ -1,6 +1,7 @@
+[localhost]
+login@localhost
 
-[primary]
-# put your IP address here, not commented:
+# Use your actual login in place of "login" here.
 
 # This is the default ansible 'hosts' file.
 #

@@ -3,6 +3,9 @@ ansible_python_interpreter: /usr/bin/python3
 
 # general variables
 #
+ansible_ssh_private_key_file: 
+ansible_ssh_password: 
+ansible_sudo_pass: 
 email_address: email_address
 email_password: whatever_the_password_is
 
@@ -20,14 +23,14 @@ docker_sdk_for_python_install: true
 # <file system>                                            <mount point>         <type>      <options>         <dump>  <pass>
 #UUID=aad41a23-be97-4cc8-a54c-51238af932b1                  /mnt/disk1            ext4        defaults          0       0
 #
-#...for each drive (iterating the mount point: disk2, disk3, etc), with the pooled drive defined as:
+#...for each drive (iterating the mount point: disk2, disk3, etc). 
+#
+#Pooled drives are defined in the following format, which should be taken care of automatically once the playbook is run:
 #
 #     mergerfs pool 
 # <file system>  <mount point >  <type>         <options>                                                        <dump>  <pass> 
 # /mnt/disk*     /mnt/storage    fuse.mergerfs  direct_io,defaults,allow_other,minfreespace=50G,fsname=mergerfs  0       0
 #
-# Make sure to assign one drive as the parity drive. I like just using /mnt/parity1 (to leave room for additional disks later if you wish).
-# This drive must be equal to or greater in size to the biggest data drive in the pool.
 
 mergerfs_mounts:
   - path: /mnt/storage
@@ -40,6 +43,9 @@ mergerfs_mounts:
 # SNAPRAID
 #
 # Indicate which of your disks you assigned as data disks in fstab.
+# Make sure to assign one drive as the parity drive. I like just using /mnt/parity1 (to leave room for additional disks later if you wish).
+# This drive must be equal to or greater in size to the biggest data drive in the pool.
+
 snapraid_data_disks:
   - path: /mnt/disk1
     content: true

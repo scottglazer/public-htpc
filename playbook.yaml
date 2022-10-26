@@ -5,7 +5,7 @@
 # docker role using https://galaxy.ansible.com/igor_nikiforov/docker
 # linux-system-role for cockpit from https://galaxy.ansible.com/linux-system-roles/cockpit
 # snapraid using https://galaxy.ansible.com/ironicbadger/ansible_role_snapraid
-# using mergerfs module: https://github.com/francescospilla/ansible-role-mergerfs
+# using sprat mergerfs role: https://github.com/sprat/ansible-role-mergerfs
 # using dyindude.discord role from https://github.com/dyindude/ansible-role-discord
 ---
 
@@ -27,7 +27,6 @@
     - role: ansible-role-curl
     - role: igor_nikiforov.docker
     - role: sprat.mergerfs
-    - role: ansible-role-snapraid
     - role: linux-system-roles.cockpit
     - role: dyindude.discord
 
