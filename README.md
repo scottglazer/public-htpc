@@ -8,15 +8,19 @@ This is intended to be used on a from-scratch Debian install.  It probably works
 
 ## Summary
 
-Setting up a media server can be a bit of a bear, with all the configuration involved.  This playbook aims to automate as much of that setup as possible, so you end up with several containerized instances of the applications you need to run your server.  Dependencies are installed initially, then the few things that must run outside containers are installed (MergerFS, Docker, SnapRaid, Discord and Cockpit).  A Docker-Compose file tells Docker what containers to pull and run from there.
+Setting up a media server can be a bit of a bear with all the configuration involved.  This playbook aims to automate as much of that setup as possible, so you end up with several containerized instances of the applications you need to run your server.  Dependencies are installed initially, then the few things that must run outside containers are installed (MergerFS, Docker, SnapRaid, Discord and Cockpit).  A Docker-Compose file tells Docker what containers to pull and run from there.
 
 Bare metal programs installed are:
 
-MergerFS - a file system that allows many physical drives to be pooled and used as one logical drive
-Docker - a system for running containerized programs
-SnapRaid - a parity file-check system to allow backup when one or more drives fail and monitoring otherwise
-Discord - a popular chat program, for which bots can be configured to allow users to make requests
-Cockpit - a monitoring program for the server
+* MergerFS - a file system that allows many physical drives to be pooled and used as one logical drive
+
+* Docker - a system for running containerized programs
+
+* SnapRaid - a parity file-check system to allow backup when one or more drives fail and monitoring otherwise
+
+* Discord - a popular chat program, for which bots can be configured to allow users to make requests
+
+* Cockpit - a monitoring program for the server
 
 Containers do the following and use the noted ports (when applicable):  
 <pre> 
@@ -53,10 +57,10 @@ First, edit files from the repo:
 
 ### The hosts file:
 
-Add your IP to the hosts file under [primary].  This is as simple as:
+This should work as-is with "localhost", but in case it doesn't, you can put your IP under the group designation, IE:
 
 ```
-[primary]
+[localhost]
 123.123.1.123
 ```
 
@@ -64,9 +68,39 @@ Add your IP to the hosts file under [primary].  This is as simple as:
 
 Edit the vars.yaml file to add:
 
+#### Your SSH Private Key File 
+
+This will look something like:
+
+/home/user/.ssh/id_rsa
+
+If you haven't generated one, go to the terminal and:
+
+```
+
+1.  Type "ssh-keygen".   You will be asked where to store it and under what name (by default /home/user/.ssh/id_rsa).  Press enter to save it.  
+
+2.  Enter a passphrase (this is optional, but you should do it).
+
+3.  Type "ssh-copy-id user@host" where "user" and "host" are the user you wish to run the playbook and the localhost respectively.  You can see these in the terminal by default, assuming you're logged in as that user.
+
+4.  You will probably get a warning about the authenticity of the host not being able to be established. This is fine, you can type "yes" here.
+
+5.  Enter your password.
+
+That should be it.
+
+```
+
+
+#### Your SSH and sudo passwords
+
+There is almost certainly a better way to do this than storing it in the vars file as plaintext (Ansible Vault, most likely), but this is what we're doing here.  When you've run the playbook, you can go back in and delete all this out if you're concerned; just be sure not to send a copy of the repo with any actual passwords in it to anyone.
+
+
 #### An email address and password.  
 
-You'll be editing it a bit more in step 2, so you may as well leave it open.  Note that if you are using a gmail account, you will need to use an "app password" and not your normal password - you can set one up under the Security settings in your Google account.  Otherwise SnapRAID Runner won't be able to email out the results of the parity checks.
+Note that if you are using a gmail account, you will need to use an "app password" and not your normal password - you can set one up under the Security settings in your Google account.  Otherwise SnapRAID Runner won't be able to email out the results of the parity checks.
 
 *NOTE: Any file beginning with a period is invisible by default in Linux.  To view the files in Debian, access the folder via the file manager and hit CTRL + H to toggle hidden files.  Other Linux distros may differ, but should have similar options.*
 
@@ -75,9 +109,12 @@ You'll be editing it a bit more in step 2, so you may as well leave it open.  No
 
 MergerFS is used to pool multiple drives - that is, you can have multiple physical drives and have them appear as one giant drive consisting of the sum of the parts.  MergerFS handles all the logical elements of this, so if a file is too big for one component drive, whatever doesn't fit will be saved to another.  You will only see it as one file in the OS.  More drives can be added at a later time and added to the pool without much effort.
 
+You will still need the vars file for the next step, but FSTAB must be configured before you make those edits, so leave it open in the editor for now.
+
+
 ##### FSTAB
 
-This requires a bit of setup outside the vars file as well - you need to edit your fstab entry to mount each drive first.
+This requires a bit of setup outside the vars file - you need to edit your fstab entry to mount each drive first.
 
 The vars file itself gives brief instructions in the comments, which I'll repeat here:
 
