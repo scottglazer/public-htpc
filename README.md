@@ -51,6 +51,12 @@ Plex              32400              32400           Media server
   
 </pre>
 
+## Downloading
+
+From the terminal, ensure you're in the directory where you wish for the repo to be saved, then type ```git clone https://github.com/scottglazer/public-htpc```
+
+cd into the newly cloned directory.
+
 ## Initial preparation and setup
 
 First, edit files from the repo:
@@ -143,7 +149,7 @@ mergerfs_mounts:
        - /mnt/disk1                     Component 1
        - /mnt/disk2                     Component 2
        - /mnt/disk3                     Component 3
-    options: allow_other,use_ino        Related options for the pool.
+    options: direct_io,defaults...      Related options for the pool.
 ```
 
 In this case, you'll be able to look at the drive "storage" and see everything held within disks 1 through 3 as though they were on one drive.
@@ -156,6 +162,7 @@ Once the playbook has been run, you can add more drives by just adding them to t
 SnapRAID 
 
 The parity entry indicates the drive(s) you wish to use for parity. More than one can be used in case of multiple drive failure, but they must be the largest drives in the array.
+
 The snapraid.content files are listings and details of the content of the disks. 
 The data entries specify the disks to check for data.
 
