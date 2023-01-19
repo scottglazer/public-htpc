@@ -369,6 +369,14 @@ While still in Overseerr, create a new user (click "Users", then "Create Local U
 
 ```
 
+### Configure Plex
+
+```
+Connect to http://localhost:32400/
+
+
+Your first login will pull up a setup wizard.  The setup guide found [here](https://support.plex.tv/articles/200264746-quick-start-step-by-step-guides/) will provide more details.
+
 ### Configure Tautulli.  
 Connect to http://localhost:27029.  Follow the Setup Wizard.
 
